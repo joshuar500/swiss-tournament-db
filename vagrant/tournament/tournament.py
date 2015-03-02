@@ -1,44 +1,95 @@
 #!/usr/bin/env python
-# 
+#
 # tournament.py -- implementation of a Swiss-system tournament
 #
 
 import psycopg2
+import bleach
 
 
 def connect():
     """Connect to the PostgreSQL database.  Returns a database connection."""
-    return psycopg2.connect("dbname=tournament")
+    try:
+        return psycopg2.connect("dbname=tournament")
+    except Exception, e:
+        raise e
 
 
 def deleteMatches():
     """Remove all the match records from the database."""
+    connection = connect()
+    c = connection.cursor()
+    c.execute("DELETE FROM result;")
+    c.execute("DELETE FROM match;")
+    connection.commit()
+    connection.close()
 
 
 def deletePlayers():
     """Remove all the player records from the database."""
+    connection = connect()
+    c = connection.cursor()
+    c.execute("DELETE FROM player;")
+    connection.commit()
+    connection.close()
 
+def deleteTournaments():
+    """Remove all tournament records from the database."""
+    connection = connect()
+    c = connection.cursor()
+    c.execute("DELETE FROM tournament;")
+    connection.commit()
+    connection.close()
 
 def countPlayers():
     """Returns the number of players currently registered."""
+    connection = connect()
+    c = connection.cursor()
+    c.execute("SELECT COUNT(*) from player;")
+    connection.close()
+    return c.fetchone()[0]
 
 
 def registerPlayer(name):
     """Adds a player to the tournament database.
-  
+
     The database assigns a unique serial id number for the player.  (This
     should be handled by your SQL database schema, not in your Python code.)
-  
+
     Args:
       name: the player's full name (need not be unique).
     """
+    connection = connect()
+    c = connection.cursor()
+    c.execute("INSERT INTO player(name) values (%s);", (bleach.clean(name),))
+    connection.commit()
+    connection.close()
 
 
-def playerStandings():
+def createTournament(name):
+    """Adds a tournament to the tournament database.
+    The database assigns a unique serial id number for the tournament.
+    Args:
+    name: the name of the tournament (need not be unique)
+    Return:
+    ID of the created tournament
+    """
+    connection = connect()
+
+    cursor = connection.cursor()
+    cursor.execute("insert into tournament (name) values(%s) returning id;", (name,))
+    tournament_id = cursor.fetchone()[0]
+    connection.commit()
+    return tournament_id
+    finally:
+    connection.close()
+
+def playerStandings(tournament):
     """Returns a list of the players and their win records, sorted by wins.
 
-    The first entry in the list should be the player in first place, or a player
-    tied for first place if there is currently a tie.
+    The first entry in the list should be the player
+    in first place, or a player tied for first place
+    if there is currently a tie.
 
     Returns:
       A list of tuples, each of which contains (id, name, wins, matches):
@@ -47,6 +98,11 @@ def playerStandings():
         wins: the number of matches the player has won
         matches: the number of matches the player has played
     """
+    connection = connect()
+    c = connection.cursor()
+    c.execute("SELECT player_id, player_name, wins, ties, games FROM standings where tournament_id=%s", (tournament,))
+    return c.fetchall()
+    connection.close()
 
 
 def reportMatch(winner, loser):
@@ -56,6 +112,10 @@ def reportMatch(winner, loser):
       winner:  the id number of the player who won
       loser:  the id number of the player who lost
     """
+    connection = connect()
+    c = connection.cursor()
+    c.execute("INSERT INTO match (tournament_id, winner, loser")
+
  
  
 def swissPairings():

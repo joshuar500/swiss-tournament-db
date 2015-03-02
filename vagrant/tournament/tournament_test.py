@@ -4,6 +4,7 @@
 
 from tournament import *
 
+
 def testDeleteMatches():
     deleteMatches()
     print "1. Old matches can be deleted."
@@ -12,6 +13,7 @@ def testDeleteMatches():
 def testDelete():
     deleteMatches()
     deletePlayers()
+    deleteTournaments()
     print "2. Player records can be deleted."
 
 
@@ -55,12 +57,21 @@ def testRegisterCountDelete():
         raise ValueError("After deleting, countPlayers should return zero.")
     print "5. Players can be registered and deleted."
 
+def testCreateTournament():
+    deleteMatches()
+    deleteTournaments()
+    deletePlayers()
+    tournament_id = createTournament("TEST TOURNEY")
+    if tournament_id < 0:
+        raise ValueError("Tournament not created with valid ID.")
+    print "5.5 Tournaments can be created."
 
 def testStandingsBeforeMatches():
     deleteMatches()
     deletePlayers()
     registerPlayer("Melpomene Murray")
     registerPlayer("Randy Schwartz")
+    tournament_id = createTournament("TEST TOURNEY")
     standings = playerStandings()
     if len(standings) < 2:
         raise ValueError("Players should appear in playerStandings even before "
