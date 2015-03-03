@@ -10,3 +10,4 @@ Type `cd /vagrant/tournament` and then `python tournament_tests.py` to start the
 ###Technologies
 ...Python
 ...PostgreSQL
+...Vagrant
