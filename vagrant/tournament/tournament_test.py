@@ -102,6 +102,7 @@ def testReportMatches():
     [id1, id2, id3, id4] = [row[0] for row in standings]
     reportMatch(tournament_id, id1, id2, id1)
     reportMatch(tournament_id, id3, id4, id3)
+    # reset the standings for this next loop
     standings = playerStandings(tournament_id)
     for (i, n, w, t, m) in standings:
         if m != 1:

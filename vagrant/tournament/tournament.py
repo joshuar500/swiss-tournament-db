@@ -33,6 +33,7 @@ def deletePlayers():
     connection.commit()
     connection.close()
 
+
 def deleteTournaments():
     """Remove all tournament records from the database."""
     connection = connect()
@@ -41,13 +42,14 @@ def deleteTournaments():
     connection.commit()
     connection.close()
 
+
 def countPlayers():
     """Returns the number of players currently registered."""
     connection = connect()
     c = connection.cursor()
     c.execute("SELECT COUNT(*) from player;")
     return c.fetchone()[0]
-    connection.close()    
+    connection.close()
 
 
 def registerPlayer(name):
@@ -92,6 +94,9 @@ def playerStandings(tournament):
     in first place, or a player tied for first place
     if there is currently a tie.
 
+    Args:
+      tournament: the id of the tournament
+
     Returns:
       A list of tuples, each of which contains (id, name, wins, matches):
         id: the player's unique id (assigned by the database)
@@ -107,12 +112,14 @@ def playerStandings(tournament):
     connection.close()
 
 
-def reportMatch(tournament, player1, player2, winner):
+def reportMatch(t, p1, p2, w):
     """Records the outcome of a single match between two players.
 
     Args:
-      winner:  the id number of the player who won
-      loser:  the id number of the player who lost
+      t: the id of the tournament
+      p1: the id of player1
+      p2: the id of player2
+      w:  the id number of the player who won
     """
     connection = connect()
     c = connection.cursor()
@@ -122,14 +129,13 @@ def reportMatch(tournament, player1, player2, winner):
         values(%(tournament)s, %(player1)s, %(player2)s)
         returning id;
         """,
-        {'tournament': tournament, 'player1': player1, 'player2': player2})
+        {'tournament': t, 'player1': p1, 'player2': p2})
     match_id = c.fetchone()[0]
-    if winner:
+    if w:
         c.execute("""
-            insert into result (match_id, winner)
-            values(%(match_id)s, %(winner)s);
-            """,
-            {'match_id': match_id, 'winner': winner})
+                insert into result (match_id, winner)
+                values(%(match_id)s, %(winner)s);
+                """, {'match_id': match_id, 'winner': w})
     connection.commit()
     connection.close()
 
@@ -141,6 +147,9 @@ def swissPairings(tournament):
     appears exactly once in the pairings.  Each player is paired with another
     player with an equal or nearly-equal win record, that is, a player adjacent
     to him or her in the standings.
+
+    Args:
+      tournament: the id of the tournament
 
     Returns:
       A list of tuples, each of which contains (id1, name1, id2, name2)
@@ -155,20 +164,22 @@ def swissPairings(tournament):
         """
         select p.player_id, p.player_name, p.byes
         from standings p, opponent_standings o
-        where p.tournament_id=%s and p.tournament_id=o.tournament_id and p.player_id=o.player_id
+            where p.tournament_id=%s
+                and p.tournament_id=o.tournament_id
+                and p.player_id=o.player_id
         order by p.wins, p.losses desc, o.wins, o.losses desc
         """,
         (tournament,))
-    rows = c.fetchall()
+    standings = c.fetchall()
     matches = []
-    bye_needed = len(rows) % 2 != 0
+    bye_needed = len(standings) % 2 != 0
     match = ()
-    for row in rows:
-        if bye_needed and row[2] == 0:
-            matches.append(row[0:2] + (None, None))
+    for player in standings:
+        if bye_needed and player[2] == 0:
+            matches.append(player[0:2] + (None, None))
             bye_needed = False
         else:
-            match += row[0:2]
+            match = match + player[0:2]
             if len(match) == 4:
                 matches.append(match)
                 match = ()
