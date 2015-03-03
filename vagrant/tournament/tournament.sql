@@ -124,8 +124,8 @@ CREATE VIEW opponent_standings AS
         sum(o.wins) AS wins,
         sum(o.losses) AS losses,
         sum(o.ties) AS ties
-    FROM tournament t
-        CROSS JOIN player p
-        LEFT JOIN match m ON m.tournament_id=t.id AND p.id IN (m.player1, m.player2)
-        LEFT JOIN standings o ON o.tournament_id=t.id AND o.player_id=case when p.id=m.player1 then m.player2 else m.player1 end
+    FROM tournament AS t
+        CROSS JOIN player AS p
+        LEFT JOIN match AS m ON m.tournament_id=t.id AND p.id IN (m.player1, m.player2)
+        LEFT JOIN standings AS o ON o.tournament_id=t.id AND o.player_id=case when p.id=m.player1 then m.player2 else m.player1 end
     GROUP BY t.id, p.id;
