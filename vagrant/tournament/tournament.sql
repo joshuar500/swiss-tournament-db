@@ -84,8 +84,15 @@ CREATE TABLE result (
 -- -----------------------------------------------------------------------------------
 -- |       1       |     3     |    Dave L   |    1    |   1  |    0   |   0  |   0  |
 -- -----------------------------------------------------------------------------------
--- from the 'tournament' table, we use a cross join to get all player ids
--- we left join the match table to 
+-- we cross join the tournament table and player table to get the ids/names for each.
+-- left join match where the tournament id in match is equal to tournament id in tournament
+-- and the player id in player is either player1 or player2 in the match table.
+-- left join result for winners where match id in result is equal to match id in match
+-- and the winner id in result is equal to player id in player.
+-- left join result for losers where match id in result is equal to match id in match
+-- and the loser id in result is NOT the same player id in player.
+-- left join match for byes where the match id in match is equal to the match id in the
+-- previous match join but where player2 did not play.
 CREATE VIEW standings AS
     SELECT t.id AS tournament_id,
         p.id AS player_id,
@@ -95,12 +102,12 @@ CREATE VIEW standings AS
         count(l.*) AS losses,
         count(m.*)-(count(w.*)+count(l.*)) AS ties,
         count(b.*) AS byes
-    FROM tournament t
-        CROSS JOIN player p
-        LEFT JOIN match m ON m.tournament_id=t.id AND p.id IN (m.player1, m.player2)
-        LEFT JOIN result w ON w.match_id=m.id AND w.winner=p.id
-        LEFT JOIN result l ON l.match_id=m.id AND l.winner!=p.id
-        LEFT JOIN match b ON b.id=m.id AND b.player2 is NULL
+    FROM tournament AS t
+        CROSS JOIN player AS p
+        LEFT JOIN match AS m ON m.tournament_id=t.id AND p.id IN (m.player1, m.player2)
+        LEFT JOIN result AS w ON w.match_id=m.id AND w.winner=p.id
+        LEFT JOIN result AS l ON l.match_id=m.id AND l.winner!=p.id
+        LEFT JOIN match AS b ON b.id=m.id AND b.player2=NULL
     GROUP BY t.id, p.id;
 
 
