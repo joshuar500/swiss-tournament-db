@@ -48,8 +48,9 @@ def countPlayers():
     connection = connect()
     c = connection.cursor()
     c.execute("SELECT COUNT(*) from player;")
-    return c.fetchone()[0]
+    players = c.fetchone()[0]
     connection.close()
+    return players
 
 
 def registerPlayer(name):
@@ -80,11 +81,11 @@ def createTournament(name):
 
     cursor = connection.cursor()
     cursor.execute("""insert into tournament (name)
-                    values(%s) returning id;""", (name,))
+                    values(%s) returning id;""", (bleach.clean(name),))
     tournament_id = cursor.fetchone()[0]
     connection.commit()
-    return tournament_id
     connection.close()
+    return tournament_id
 
 
 def playerStandings(tournament):
@@ -107,9 +108,10 @@ def playerStandings(tournament):
     connection = connect()
     c = connection.cursor()
     c.execute("""SELECT player_id, player_name, wins, ties, matches
-        FROM standings where tournament_id=%s""", (tournament,))
-    return c.fetchall()
+        FROM standings where tournament_id=%s""", (bleach.clean(tournament),))
+    standings = c.fetchall()
     connection.close()
+    return standings
 
 
 def reportMatch(t, p1, p2, w):
@@ -129,13 +131,13 @@ def reportMatch(t, p1, p2, w):
         values(%(tournament)s, %(player1)s, %(player2)s)
         returning id;
         """,
-        {'tournament': t, 'player1': p1, 'player2': p2})
+        {'tournament': bleach.clean(t), 'player1': bleach.clean(p1), 'player2': bleach.clean(p2)})
     match_id = c.fetchone()[0]
     if w:
         c.execute("""
                 insert into result (match_id, winner)
                 values(%(match_id)s, %(winner)s);
-                """, {'match_id': match_id, 'winner': w})
+                """, {'match_id': bleach.clean(match_id), 'winner': bleach.clean(w)})
     connection.commit()
     connection.close()
 
@@ -160,6 +162,13 @@ def swissPairings(tournament):
     """
     connection = connect()
     c = connection.cursor()
+    #
+    # Get player id, player name, and player byes
+    # from player standings and opponent standings
+    # where tournament is referenced in both
+    # player standings and opponent standings
+    # and  player id is equal to opponent id
+    # store into a variable 'standings'
     c.execute(
         """
         select p.player_id, p.player_name, p.byes
@@ -172,16 +181,19 @@ def swissPairings(tournament):
         (tournament,))
     standings = c.fetchall()
     matches = []
+    # if the length of standings is divisble
+    # by 2 and not equal to zero, then
+    # no bye is needed at this time
     bye_needed = len(standings) % 2 != 0
     match = ()
     for player in standings:
         if bye_needed and player[2] == 0:
+            print bye_needed
             matches.append(player[0:2] + (None, None))
-            bye_needed = False
         else:
             match = match + player[0:2]
             if len(match) == 4:
                 matches.append(match)
                 match = ()
-    return matches
     connection.close()
+    return matches
