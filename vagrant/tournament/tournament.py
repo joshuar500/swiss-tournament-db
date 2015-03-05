@@ -14,6 +14,10 @@ def connect():
     except Exception, e:
         raise e
 
+def commitAndCloseConnect(c):
+    c.commit()
+    c.close()
+
 
 def deleteMatches():
     """Remove all the match records from the database."""
@@ -21,17 +25,14 @@ def deleteMatches():
     c = connection.cursor()
     c.execute("DELETE FROM result;")
     c.execute("DELETE FROM match;")
-    connection.commit()
-    connection.close()
-
+    commitAndCloseConnect(connection)
 
 def deletePlayers():
     """Remove all the player records from the database."""
     connection = connect()
     c = connection.cursor()
     c.execute("DELETE FROM player;")
-    connection.commit()
-    connection.close()
+    commitAndCloseConnect(connection)
 
 
 def deleteTournaments():
@@ -39,8 +40,7 @@ def deleteTournaments():
     connection = connect()
     c = connection.cursor()
     c.execute("DELETE FROM tournament;")
-    connection.commit()
-    connection.close()
+    commitAndCloseConnect(connection)
 
 
 def countPlayers():
@@ -65,8 +65,7 @@ def registerPlayer(name):
     connection = connect()
     c = connection.cursor()
     c.execute("INSERT INTO player (name) values (%s);", (bleach.clean(name),))
-    connection.commit()
-    connection.close()
+    commitAndCloseConnect(connection)
 
 
 def createTournament(name):
@@ -83,8 +82,7 @@ def createTournament(name):
     cursor.execute("""insert into tournament (name)
                     values(%s) returning id;""", (bleach.clean(name),))
     tournament_id = cursor.fetchone()[0]
-    connection.commit()
-    connection.close()
+    commitAndCloseConnect(connection)
     return tournament_id
 
 
@@ -138,8 +136,7 @@ def reportMatch(t, p1, p2, w):
                 insert into result (match_id, winner)
                 values(%(match_id)s, %(winner)s);
                 """, {'match_id': bleach.clean(match_id), 'winner': bleach.clean(w)})
-    connection.commit()
-    connection.close()
+    commitAndCloseConnect(connection)
 
 
 def swissPairings(tournament):
@@ -180,15 +177,14 @@ def swissPairings(tournament):
         """,
         (tournament,))
     standings = c.fetchall()
-    matches = []
+    match = ()
+    matches = []    
     # if the length of standings is divisble
     # by 2 and not equal to zero, then
     # no bye is needed at this time
     bye_needed = len(standings) % 2 != 0
-    match = ()
     for player in standings:
         if bye_needed and player[2] == 0:
-            print bye_needed
             matches.append(player[0:2] + (None, None))
         else:
             match = match + player[0:2]
@@ -196,4 +192,4 @@ def swissPairings(tournament):
                 matches.append(match)
                 match = ()
     connection.close()
-    return matches
+    return list(set(matches))

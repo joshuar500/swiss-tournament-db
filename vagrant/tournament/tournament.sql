@@ -84,15 +84,6 @@ CREATE TABLE result (
 -- -----------------------------------------------------------------------------------
 -- |       1       |     3     |    Dave L   |    1    |   1  |    0   |   0  |   0  |
 -- -----------------------------------------------------------------------------------
--- we cross join the tournament table and player table to get the ids/names for each.
--- left join match where the tournament id in match is equal to tournament id in tournament
--- and the player id in player is either player1 or player2 in the match table.
--- left join result for winners where match id in result is equal to match id in match
--- and the winner id in result is equal to player id in player.
--- left join result for losers where match id in result is equal to match id in match
--- and the loser id in result is NOT the same player id in player.
--- left join match for byes where the match id in match is equal to the match id in the
--- previous match join but where player2 did not play.
 CREATE VIEW standings AS
     SELECT t.id AS tournament_id,
         p.id AS player_id,
