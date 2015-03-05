@@ -149,6 +149,5 @@ if __name__ == '__main__':
     testRegisterCountDelete()
     testStandingsBeforeMatches()
     testReportMatches()
-    testPairings()
-    testPairingsByes()
+    testPairings()    
     print "Success!  All tests pass!"
